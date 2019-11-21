@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationConfiguration
+  xmlns:ua="http://opcfoundation.org/UA/2008/02/Types.xsd"
+  xmlns="http://opcfoundation.org/UA/SDK/Configuration.xsd"
+>
+  <ApplicationName>StackOverflow Example OPC UA Server</ApplicationName>
+  <ApplicationUri>urn:localhost:stack-overflow-opc-ua-server</ApplicationUri>
+  <ApplicationType>Server_0</ApplicationType>
+
+  <SecurityConfiguration>
+
+    <!-- Where the application instance certificate is stored (MachineDefault) -->
+    <ApplicationCertificate>
+      <StoreType>X509Store</StoreType>
+      <StorePath>CurrentUser\UA_MachineDefault</StorePath>
+      <SubjectName>CN=StackOverflow Example OPC UA Server,DC=localhost</SubjectName>
+    </ApplicationCertificate>
+
+    <!-- The list of certification authorities. 
+    
+         Typical web browsing applications trust any certificate issued by a CA in the 
+         "Trusted Root Certification Authorities" certificate store. However, this approach is 
+         not appropriate for UA because Adminstrators have no control over the CAs that get
+         placed in that Root store to facilitate web browsing. This means Adminstrators must
+         specify a different store that is used only for UA related CAs and/or they must explicitly
+         specify the certificate for each trusted certification authority. -->
+    <TrustedIssuerCertificates>
+      <StoreType>Directory</StoreType>
+      <StorePath>%CommonApplicationData%\OPC Foundation\pki\issuer</StorePath>
+    </TrustedIssuerCertificates>
+
+    <!-- The list of trusted certificates. 
+    
+         Some UA applications will use self-signed certificates (certificates without a CA)
+         which means that every application which communicates with it must be configured to 
+         trust it.
+         
+         Adminstrators may designate a certificate store that contains trusted UA application 
+         instance certificates (this store should not be the same as the store used for CAs 
+         certificates). Alternately, Administrators may enter the certificates explicitly in
+         this list.
+         
+         Note that entries in this list may either reference a certificate in the store or
+         may contained the entire certificate encoded as base64 data.
+         -->
+    <TrustedPeerCertificates>
+      <StoreType>Directory</StoreType>
+      <StorePath>%CommonApplicationData%\OPC Foundation\pki\trusted</StorePath>
+    </TrustedPeerCertificates>
+
+    <!-- Applications exchange Nonces during the CreateSession. This value specifies the length. Must be >= 32 -->
+    <NonceLength>32</NonceLength>
+
+    <!-- The directory used to store invalid certficates for later review by the administrator. -->
+    <RejectedCertificateStore>
+      <StoreType>Directory</StoreType>
+      <StorePath>%CommonApplicationData%\OPC Foundation\pki\rejected</StorePath>
+    </RejectedCertificateStore>
+
+    <!-- WARNING: SHA1 signed certficates are by default rejected and should be phased out. -->
+    <RejectSHA1SignedCertificates>true</RejectSHA1SignedCertificates>
+    <MinimumCertificateKeySize>2048</MinimumCertificateKeySize>
+
+    <!-- Specifies whether the complete certificate chain should be sent for CA signed certificates. -->
+    <SendCertificateChain>false</SendCertificateChain>
+
+  </SecurityConfiguration>
+
+  <TransportConfigurations/>
+
+  <!-- Specifies quotas used to by the transport layer -->
+  <TransportQuotas>
+
+    <!-- The default timeout in milliseconds for operations (used by clients) -->
+    <OperationTimeout>120000</OperationTimeout>
+
+    <!-- The maximum length for a string value in any message -->
+    <MaxStringLength>1048576</MaxStringLength>
+
+    <!-- The maximum length for a byte string value in any message -->
+    <MaxByteStringLength>4194304</MaxByteStringLength>
+
+    <!-- The maximum length for any array in a message. 
+         Note that some protocols do not distinguish between bytes and arrays. 
+         In these cases the binding will choose the larger of 
+         MaxByteStringLength or MaxArrayLength-->
+    <MaxArrayLength>65535</MaxArrayLength>
+
+    <!-- The maximum size of any message -->
+    <MaxMessageSize>4194304</MaxMessageSize>
+
+    <!-- The maximum buffer size 
+         This value controls how big a block of memory the transport layer allocates.
+         Setting this value to a large value will reduce performance and use a lot of RAM -->
+    <MaxBufferSize>65535</MaxBufferSize>
+
+    <!-- The lifetime of a SecureChannel in milliseconds.
+         This specifies how long the server will keep a broken channel around while waiting 
+         for a client to reconnect.
+         Not used by HTTP or .NET TCP bindings -->
+    <ChannelLifetime>300000</ChannelLifetime>
+
+    <!-- The lifetime of a SecurityToken in milliseconds.
+         This specifies how long a security token can be used without renewal. -->
+    <SecurityTokenLifetime>3600000</SecurityTokenLifetime>
+
+  </TransportQuotas>
+
+  <ServerConfiguration>
+    <!-- The set of addresses. One for each supported protocol.    
+         Note that "localhost" is replace with the hostname when the configuration is loaded.
+    
+         Additional URLs are created by appending strings to the base address.
+         For example, a URL used for an endpoint which uses the Basic256 security policy would look like this:
+         http://localhost:61211/UA/SampleClient/Basic256Sha256 -->
+    <BaseAddresses>
+      <ua:String>opc.tcp://localhost:64521/UA</ua:String>
+    </BaseAddresses>
+
+    <!-- 
+    These list the alternate addresses (via firewalls, multiple NICs etc.) that can be
+    used to communicate with the server. The URL used by the client when calling
+    FindServers/GetEndpoints or CreateSession will be used to filter the list of
+    endpoints returned by checking for alternate base addresses that have a domain
+    that matches the domain in the url provided by the client.
+    
+    Note that any additional domains should be listed in the server's certificate. If they
+    are left out the client make refuse to connect because it has no way to know if the 
+    alternate domain was authorized by the server administrator.
+    -->
+
+    <!--
+    <AlternateBaseAddresses>
+      <ua:String>http://mycompany.com:40000/UA/SampleServer</ua:String>
+    </AlternateBaseAddresses>
+    -->
+
+    <!-- The security policies supported by the server.
+         
+         The SDK combines these with the base address to create as many EndpointDescriptions as required.
+         Protocols such as HTTP only allow one SecurityPolicy per endpoint to addition URLs are constructed
+         using the SecurityPolicy and SecurityMode.
+         
+         The first policy in the list is assigned to base address. -->
+    <SecurityPolicies>
+      <ServerSecurityPolicy>
+        <SecurityMode>SignAndEncrypt_3</SecurityMode>
+        <SecurityPolicyUri>http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256</SecurityPolicyUri>
+      </ServerSecurityPolicy>
+    </SecurityPolicies>
+
+    <MinRequestThreadCount>5</MinRequestThreadCount>
+    <MaxRequestThreadCount>100</MaxRequestThreadCount>
+    <MaxQueuedRequestCount>2000</MaxQueuedRequestCount>
+
+    <UserTokenPolicies>
+      <ua:UserTokenPolicy>
+        <ua:TokenType>Anonymous_0</ua:TokenType>
+        <ua:SecurityPolicyUri>http://opcfoundation.org/UA/SecurityPolicy#None</ua:SecurityPolicyUri>
+      </ua:UserTokenPolicy>
+    </UserTokenPolicies>
+
+    <!-- Whether the server updates its diagnostic information -->
+    <DiagnosticsEnabled>false</DiagnosticsEnabled>
+
+    <!-- The maximum number of simultaneous sessions -->
+    <MaxSessionCount>100</MaxSessionCount>
+
+    <!-- The minimum session lifetime permitted by the server -->
+    <MinSessionTimeout>10000</MinSessionTimeout>
+
+    <!-- The maximum session lifetime permitted by the server -->
+    <MaxSessionTimeout>3600000</MaxSessionTimeout>
+
+    <!-- The maximum number of browse continuation points per session -->
+    <MaxBrowseContinuationPoints>10</MaxBrowseContinuationPoints>
+
+    <!-- The maximum number of query continuation points per session -->
+    <MaxQueryContinuationPoints>10</MaxQueryContinuationPoints>
+
+    <!-- The maximum number of history continuation points per session -->
+    <MaxHistoryContinuationPoints>100</MaxHistoryContinuationPoints>
+
+    <!-- The maximum age of an incoming request -->
+    <MaxRequestAge>600000</MaxRequestAge>
+
+    <!-- The minimum allowed publishing interval (in milliseconds) -->
+    <MinPublishingInterval>100</MinPublishingInterval>
+
+    <!-- The maximum allowed publishing interval (in milliseconds) -->
+    <MaxPublishingInterval>3600000</MaxPublishingInterval>
+
+    <!-- The publishing resolution. Requested publishing intervals are rounded up to the next multiple of this value.-->
+    <PublishingResolution>50</PublishingResolution>
+
+    <!-- The maximum subscription lifetime.
+         This controls the maximum keep alive count. Smaller publishing intervals will allow large keep alives
+         provided the maximum subscription lifetime is not exceeded -->
+    <MaxSubscriptionLifetime>3600000</MaxSubscriptionLifetime>
+
+    <!-- The maximum number of sent messages kept in the queue for each subscription-->
+    <MaxMessageQueueSize>100</MaxMessageQueueSize>
+
+    <!-- The maximum number of notifications kept in the queue for each monitored item-->
+    <MaxNotificationQueueSize>100</MaxNotificationQueueSize>
+
+    <!-- The maximum number of notifications in a single publish response -->
+    <MaxNotificationsPerPublish>1000</MaxNotificationsPerPublish>
+
+    <!-- The minimum sampling rate for rarely changing metadata information (such as the server status) -->
+    <MinMetadataSamplingInterval>1000</MinMetadataSamplingInterval>
+
+    <!-- The set of supported sampling rates -->
+    <AvailableSamplingRates />
+
+    <RegistrationEndpoint>
+      <ua:EndpointUrl>opc.tcp://localhost:4840</ua:EndpointUrl>
+      <ua:Server>
+        <ua:ApplicationUri>opc.tcp://localhost:4840</ua:ApplicationUri>
+        <ua:ApplicationType>DiscoveryServer_3</ua:ApplicationType>
+        <ua:DiscoveryUrls>
+          <ua:String>opc.tcp://localhost:4840</ua:String>
+        </ua:DiscoveryUrls>
+      </ua:Server>
+      <ua:SecurityMode>SignAndEncrypt_3</ua:SecurityMode>
+      <ua:SecurityPolicyUri />
+      <ua:UserIdentityTokens />
+    </RegistrationEndpoint>
+
+    <!-- The maximum interval between registration. 0 disables periodic registration -->
+    <MaxRegistrationInterval>30000</MaxRegistrationInterval>
+
+    <!-- The file used to save nodes added to the CoreNodeManager. If missing the CoreNodeManger will discard nodes when it stops. -->
+    <NodeManagerSaveFile>Opc.Ua.Server.nodes.xml</NodeManagerSaveFile>
+
+    <!-- The minimum subscription lifetime.
+    This ensures subscriptions are not set to expire too quickly. The revised lifetime count
+    and keep alive count are calculated with this value. -->
+    <MaxPublishRequestCount>20</MaxPublishRequestCount>
+    <MaxSubscriptionCount>100</MaxSubscriptionCount>
+    <MaxEventQueueSize>10000</MaxEventQueueSize>
+    <MinSubscriptionLifetime>10000</MinSubscriptionLifetime>
+
+    <!-- see https://opcfoundation-onlineapplications.org/profilereporting/ for list of available profiles -->
+    <ServerProfileArray>
+      <ua:String>Standard UA Server Profile</ua:String>
+      <ua:String>Data Access Server Facet</ua:String>
+      <ua:String>Method Server Facet</ua:String>
+    </ServerProfileArray>
+    <ShutdownDelay>5</ShutdownDelay>
+    <ServerCapabilities>
+      <ua:String>DA</ua:String>
+    </ServerCapabilities>
+    <SupportedPrivateKeyFormats>
+      <ua:String>PFX</ua:String>
+      <ua:String>PEM</ua:String>
+    </SupportedPrivateKeyFormats>
+    <MaxTrustListSize>0</MaxTrustListSize>
+    <MultiCastDnsEnabled>false</MultiCastDnsEnabled>
+
+  </ServerConfiguration>
+
+  <TraceConfiguration>
+    <OutputFilePath>%CommonApplicationData%/OPC Foundation/Logs/Sim.Backend.Opc.Ua.Server.log.txt</OutputFilePath>
+    <DeleteOnLoad>true</DeleteOnLoad>
+    <!-- Show Only Errors -->
+    <!-- <TraceMasks>1</TraceMasks> -->
+    <!-- Show Only Security and Errors -->
+    <!-- <TraceMasks>513</TraceMasks> -->
+    <!-- Show Only Security, Errors and Trace -->
+    <!-- <TraceMasks>515</TraceMasks> -->
+    <!-- Show Only Security, COM Calls, Errors and Trace -->
+    <!-- <TraceMasks>771</TraceMasks> -->
+    <!-- Show Only Security, Service Calls, Errors and Trace -->
+    <!-- <TraceMasks>523</TraceMasks> -->
+    <!-- Show Only Security, ServiceResultExceptions, Errors and Trace -->
+    <TraceMasks>519</TraceMasks>
+    <!-- Show All -->
+    <!-- <TraceMasks>2147483647</TraceMasks> -->
+  </TraceConfiguration>
+
+  <!-- Disables the hi-res clock if the QueryPerformanceCounter does work on a particular machine. -->
+  <DisableHiResClock>false</DisableHiResClock>
+
+</ApplicationConfiguration>
